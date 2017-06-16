@@ -32,6 +32,8 @@ struct MailData {
     }
 };
 
+
+
 void finConnexion(int sock);
 int connexion(const MailData *data);
 int echange(const MailData *data);
