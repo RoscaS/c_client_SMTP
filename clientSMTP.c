@@ -5,7 +5,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#define PORT_SMTP 25 // SMTP: port 25, (587: auth, 465: ssl)
+#define PORT_SMTP 587 // SMTP: port 25, (587: auth, 465: ssl)
 #define BUFFER_SIZE 1024
 
 struct MailData {
@@ -22,11 +22,11 @@ struct MailData {
         // filePath    = arg[3];
         // domainDns   = arg[4];
         // destination = arg[5];
-        source      = "sol.rosca@lala.com";
+        source      = "sol.rosca@he-arc.ch";
         subject     = "viande";
         filePath    = "data.txt";
-        domainDns   = "localhost";
-        destination = "sol.rosca@gmail.com";
+        domainDns   = "smtp.alphanet.ch";
+        destination = "info@alphanet.ch";
         portno      = PORT_SMTP;
 
     }
