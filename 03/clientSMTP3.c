@@ -9,6 +9,10 @@
 #define PORT_SMTP 25 // SMTP: port 25, (587: auth, 465: ssl)
 
 // etats
+// faits comme ca car tout le principe d'enum 
+// c'est de ne pas forcement etre suivi ou 
+// contigu en memoire. TODO (optionnel) trouver
+// un moyen d'incrementer un enum pour remplacer ca.
 #define START 0
 #define HELO 1
 #define FROM 2
@@ -20,9 +24,6 @@
 #define QUIT 8
 #define ERROR 9
 
-// on/off
-#define OFF 0
-#define ON  1
 
 // struct parametres
 typedef struct MailData MailData;
@@ -37,11 +38,15 @@ struct MailData {
 
 // initialisation des parametres
 void initMD(MailData *md, char **arg) {
+    // DECOMMENTER POUR PASSER LES PARAM A LA CMD
+
     // md->source      = arg[1];
     // md->sujet       = arg[2];
     // md->filePath    = arg[3];
     // md->domainDns   = arg[4];
     // md->destination = arg[5];
+
+    // HARDCODE DES PARAM POUR PAS SE FAIR CHIER
     md->source      = "sol.rosca@he-arc.ch";
     md->sujet       = "test";
     md->filePath    = "mail.txt";
@@ -202,6 +207,10 @@ int machineEtat(const MailData *args) {
 
             case BODY:
                 
+                // TODO: TRUC QUI CLOCHE ICI, IL PASSE PAS DANS CET ETAT
+                // je pensais que c'etait le bloc qui suit mais apparament 
+                // c'est le precedent... et ca c'est vrmt bizare, y a rien
+                // qui peut le faire bloquer dans le precedent
 
                 printf("\nEtat: BODY\n");
                 txt = fopen(args->filePath, "r");
@@ -235,15 +244,22 @@ int machineEtat(const MailData *args) {
                 exit(1);        
         }
 
+        // TODO: je tatonne avec les 1000 facon de print (et ou print)
+        // pour avoir un display simple et utile comme dans la version
+        // du master.
+
         fgets(buffer, sizeof(buffer), f);
+        printf("%s", buffer);
+        fgets(buffer, sizeof(buffer), sock);
         printf("%s", buffer);
         etat++;        
 
 
-        
 
-        
 
+
+        // LE BLOC QUI SUIt EST RESIDU DES TESTS INITIAUX POUR PIGER COMMENT
+        // IMPLEMENTER LA MACHINE D ETAT.
 
         // fgets(buffer, sizeof(buffer), stdin);
         // buffer[strlen(buffer) - 1] = '\0'; // écrase le \n en fin de ligne
@@ -274,6 +290,10 @@ int machineEtat(const MailData *args) {
 
     return 0;    
 }
+
+
+// CRASSE ULTIME QUI RALOURDI LE CODE ET QUI DONNE UN DISPLAY MOINS
+// EFFICACE QUE CE QUE T AS NORMALEMENT
 
 int erreurs(FILE *f, char code) {
     char buffer[1024];
