@@ -236,7 +236,6 @@ int machineEtat(const MailData *args) {
         }
 
         fgets(buffer, sizeof(buffer), f);
-
         printf("%s", buffer);
         etat++;        
 
@@ -285,23 +284,19 @@ int erreurs(FILE *f, char code) {
     else {
 	    switch (buffer[0]) {
 	        case '2':
-                //La commande a été éxecuter sans erreur
-                printf("\nRéponse attendu : %d, nombre recu : 2\n",code);
+                printf("\n %d, recu : 2\n",code);
                 return -1;
 	        case '3':
-                //La commande est en cours d'éxecution
-                printf("\nRéponse attendu : %d, nombre recu : 3\n",code);
+                printf("\n %d, recu : 3\n",code);
                 return -1;
 	        case '4':
-                //Erreur temporaire réessayer plus tard
-                printf("\nRéponse attendu : %d, nombre recu : 3\n",code);
+                printf("\n %d, recu : 3\n",code);
                 return 1;
 	        case '5':
-		        //La commande n'a pas pu être traitée
-               	perror("\nLa commande n'a pas pu être traitée, nombre recu : 5 \n");
+               	perror("\npas traite, recu : 5 \n");
 		        return -1;
 	        default:
-               	perror("\nErreur le nombre recu n'est pas entre 2 et 5 \n");
+               	perror("\nERR: pas entre 2 et 5 \n");
 		        return -1;
     	}
     }
