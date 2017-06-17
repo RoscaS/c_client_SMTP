@@ -28,7 +28,7 @@
 typedef struct MailData MailData;
 struct MailData {
     const char *source;
-    const char *subject;
+    const char *sujet;
     const char *filePath;
     const char *domainDns;
     const char *destination;
@@ -38,12 +38,12 @@ struct MailData {
 // initialisation des parametres
 void initMD(MailData *md, char **arg) {
     // md->source      = arg[1];
-    // md->subject     = arg[2];
+    // md->sujet       = arg[2];
     // md->filePath    = arg[3];
     // md->domainDns   = arg[4];
     // md->destination = arg[5];
     md->source      = "sol.rosca@he-arc.ch";
-    md->subject     = "test";
+    md->sujet       = "test";
     md->filePath    = "mail.txt";
     md->domainDns   = "localhost";
     md->destination = "sol.rosca@gmail.com";
@@ -54,9 +54,10 @@ void initMD(MailData *md, char **arg) {
 int machineEtat(const MailData *args);
 int  connexion(const MailData *md);
 void finConnexion(const int sock);
-void envoie(const int sock, char *buff);
-int  reponse(const int sock);
-char* routine(const int sock, char *buff);
+// void envoie(const int sock, char *buff);
+// int  reponse(const int sock);
+// int routine(const int sock, char *buff);
+int erreurs(FILE *f, char code);
 
 int main(int argc, char **argv) {
     // // check args
@@ -121,52 +122,51 @@ void finConnexion(const int sock) {
 }
 
 
-// retourne le code msg SMTP
-int reponse(const int sock) {
-    char buffer[BUFFER_SIZE];
-    int  buff_idx = 0;
+// // retourne le code msg SMTP
+// int reponse(const int sock) {
+//     char buffer[BUFFER_SIZE];
+//     int  buff_idx = 0;
 
-    do {
-        read(sock, buffer + buff_idx, 1);
-    } 
-    while (buffer[buff_idx++] != '\n' && buff_idx < sizeof(buffer));
+//     do {
+//         read(sock, buffer + buff_idx, 1);
+//     } 
+//     while (buffer[buff_idx++] != '\n' && buff_idx < sizeof(buffer));
 
-    buffer[buff_idx-1] = '\0';
-    printf("%s\n", buffer);
-    return atoi(buffer); 
-}
-
-
-
-void envoie(const int sock, char *buff) {
-    printf("%s\n", buff);
-    write(sock, buff, strlen(buff));
-    write(sock, "\r\n", 2);
-}
+//     buffer[buff_idx-1] = '\0';
+//     printf("%s\n", buffer);
+//     return atoi(buffer); 
+// }
 
 
-char* routine(const int sock, char *buff) {
-    int    code_int;
-    char * code_str;
-    envoie(sock, buff);
-    code_int = reponse(sock);
-    sprintf(code_str, "%d", code_int);
-    bzero(buff, BUFFER_SIZE);
-    return code_str;
-}
+
+// void envoie(const int sock, char *buff) {
+//     printf("%s\n", buff);
+//     write(sock, buff, strlen(buff));
+//     write(sock, "\r\n", 2);
+// }
+
+
+// int routine(const int sock, char *buff) {
+//     int code;
+//     envoie(sock, buff);
+//     code = reponse(sock);
+//     bzero(buff, BUFFER_SIZE);
+//     return code;
+// }
 
 
 int machineEtat(const MailData *args) {
     int etat, sock, onOff;
-    char *code;
+    // int code;
+    // char code_char[3];
     // int grayFlag;
     char buffer[BUFFER_SIZE];
-    // FILE *f;
+    FILE *f, *txt;
 
     onOff = ON; 
     etat  = START;
     sock  = connexion(args);
-    bzero(buffer, BUFFER_SIZE);
+    f     = fdopen(sock, "r+");
 
     while(onOff) {
         switch(etat) {
@@ -177,35 +177,54 @@ int machineEtat(const MailData *args) {
 
             case HELO:
                 printf("\nEtat: HELO\n");
-                sprintf(buffer, "HELO host");
+                fprintf(f, "HELO host\r\n");
                 break;
 
             case FROM:
                 printf("\nEtat: FROM\n");
+                fprintf(f,"MAIL FROM: <%s>\r\n",args->source);
                 break;
 
             case TO:
                 printf("\nEtat: TO\n");
+                fprintf(f,"RCPT TO: <%s>\r\n",args->destination);
                 break;
 
             case DATA:
                 printf("\nEtat: DATA\n");
+                fprintf(f,"DATA\r\n");
                 break;
 
             case SUBJ:
                 printf("\nEtat: SUBJ\n");
+                fprintf(f,"Subject: %s\r\n",args->sujet);
                 break;
 
             case BODY:
+                
+
                 printf("\nEtat: BODY\n");
+                txt = fopen(args->filePath, "r");
+                if (txt < 0) {
+                    perror("ERROR can't open file");
+                    exit(1);
+                }
+                while (fgets(buffer, sizeof(buffer), txt)) {
+                    fputs(buffer,f);
+                }
+                fclose(txt);
+
                 break;
 
             case DOT:
                 printf("\nEtat: DOT\n");
+                fprintf(f,"\r\n.\r\n");
                 break;
 
             case QUIT:
                 printf("\nEtat: QUIT\n");
+                fprintf(f,"QUIT\r\n");
+                onOff = OFF;                                
                 break;
 
             case ERROR:
@@ -216,13 +235,15 @@ int machineEtat(const MailData *args) {
                 exit(1);        
         }
 
+        fgets(buffer, sizeof(buffer), f);
+
+        printf("%s", buffer);
+        etat++;        
 
 
-        code = routine(sock, buffer);
+        
 
-        printf("code: %s", code[0]);
-
-        onOff = OFF;
+        
 
 
         // fgets(buffer, sizeof(buffer), stdin);
@@ -253,4 +274,35 @@ int machineEtat(const MailData *args) {
     finConnexion(sock);
 
     return 0;    
+}
+
+int erreurs(FILE *f, char code) {
+    char buffer[1024];
+    fgets(buffer, sizeof(buffer), f);
+    if(buffer[0]==code) {
+	    return 0;
+    }
+    else {
+	    switch (buffer[0]) {
+	        case '2':
+                //La commande a été éxecuter sans erreur
+                printf("\nRéponse attendu : %d, nombre recu : 2\n",code);
+                return -1;
+	        case '3':
+                //La commande est en cours d'éxecution
+                printf("\nRéponse attendu : %d, nombre recu : 3\n",code);
+                return -1;
+	        case '4':
+                //Erreur temporaire réessayer plus tard
+                printf("\nRéponse attendu : %d, nombre recu : 3\n",code);
+                return 1;
+	        case '5':
+		        //La commande n'a pas pu être traitée
+               	perror("\nLa commande n'a pas pu être traitée, nombre recu : 5 \n");
+		        return -1;
+	        default:
+               	perror("\nErreur le nombre recu n'est pas entre 2 et 5 \n");
+		        return -1;
+    	}
+    }
 }
