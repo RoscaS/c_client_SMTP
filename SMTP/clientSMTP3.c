@@ -71,7 +71,9 @@ int erreurs(FILE *f, char code);
 int main(int argc, char **argv) {
      // check args
      if (argc < 6) {
-         fprintf(stderr, "\nusage %s \n\n", argv[0]);
+         //fprintf(stderr, "\nusage %s \n\n", argv[0]);
+        printf("Paramètres manquants !\n");
+        printf("Source sujet file domain DNS destination [port] \n");
          exit(1); // todo: fonction help
      }
 
