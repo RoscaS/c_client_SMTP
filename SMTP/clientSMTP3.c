@@ -18,7 +18,8 @@
 #define BODY 6
 #define DOT  7
 #define QUIT 8
-#define ERROR 9
+#define ERROR4 9
+#define ERROR5 10
 
 // on/off
 #define OFF 0
@@ -54,19 +55,17 @@ void initMD(MailData *md, char **arg) {
     md->source      = "sol.rosca@he-arc.ch";
     md->sujet       = "test";
     md->filePath    = "mail.txt";
-    md->domainDns   = "smtp.alphanet.ch";
-    md->destination = "schaefer@alphanet.ch";
+    md->domainDns   = "aspmx.l.google.com";
+    md->destination = "schaefer@alphanettt.ch";
     md->portno      = PORT_SMTP;
 }
 
 // prototypes
-int machineEtat(const MailData *args);
+int machineEtat(const MailData *args, int sleepTime);
 int  connexion(const MailData *md);
 void finConnexion(const int sock);
-// void envoie(const int sock, char *buff);
-// int  reponse(const int sock);
-// int routine(const int sock, char *buff);
 int erreurs(FILE *f, char code);
+void childProcess(int sock);
 
 int main(int argc, char **argv) {
      // check args
@@ -82,7 +81,7 @@ int main(int argc, char **argv) {
     initMD(&md1, argv);
 
 
-    machineEtat(&md1);
+    machineEtat(&md1, 0);
     
     return 0;
 }
@@ -132,48 +131,14 @@ int connexion(const MailData *md) {
 
 
 void finConnexion(const int sock) {
+    // shutdown(sock, 2);
     close(sock);
 }
 
 
-// // retourne le code msg SMTP
-// int reponse(const int sock) {
-//     char buffer[BUFFER_SIZE];
-//     int  buff_idx = 0;
-
-//     do {
-//         read(sock, buffer + buff_idx, 1);
-//     } 
-//     while (buffer[buff_idx++] != '\n' && buff_idx < sizeof(buffer));
-
-//     buffer[buff_idx-1] = '\0';
-//     printf("%s\n", buffer);
-//     return atoi(buffer); 
-// }
-
-
-
-// void envoie(const int sock, char *buff) {
-//     printf("%s\n", buff);
-//     write(sock, buff, strlen(buff));
-//     write(sock, "\r\n", 2);
-// }
-
-
-// int routine(const int sock, char *buff) {
-//     int code;
-//     envoie(sock, buff);
-//     code = reponse(sock);
-//     bzero(buff, BUFFER_SIZE);
-//     return code;
-// }
-
-
-int machineEtat(const MailData *args) {
-    int etat, sock, onOff;
-    // int code;
-    // char code_char[3];
-    // int grayFlag;
+int machineEtat(const MailData *args, int sleepTime) {
+    sleep(sleepTime);
+    int etat, sock, onOff, recup, pid;
     char buffer[BUFFER_SIZE];
     FILE *f, *txt;
 
@@ -183,7 +148,7 @@ int machineEtat(const MailData *args) {
     f     = fdopen(sock, "r+");
 
     while(onOff) {
-        int recup = 0;
+        recup = 0;
         switch(etat) {
 
             case START:
@@ -243,83 +208,65 @@ int machineEtat(const MailData *args) {
 
             case QUIT:
                 printf("\nEtat: QUIT\n");
-                fprintf(f,"QUIT\r\n");
+                fprintf(f,"Succes\r\n");
                 onOff = OFF;                                
                 break;
 
-            case ERROR:
-                printf("\nEtat: ERROR\n");
+            case ERROR4:
+                printf("\nEtat: ERROR4\n");
+                printf("ERROR %c%c%c: grey-listed\n", buffer[0], buffer[1], buffer[2]);
+                printf("forking process & retry in 20'...");
+
+                // forking
+                pid = fork();
+
+                if (pid < 0) {
+                    perror("ERROR on fork");
+                    exit(1);
+                }
+
+                if (pid == 0) {
+                    finConnexion(sock);
+                    machineEtat(args, 600);
+                    exit(0);
+                }
+                break;     
+
+            case ERROR5:
+                printf("\nEtat: ERROR5\n");
+                printf("ERROR %c%c%c: final error\n", buffer[0], buffer[1], buffer[2]);
+                printf("exit...\n");
+                finConnexion(sock);
+                exit(1);
                 break;
             
             default:
                 exit(1);        
         }
-        if(recup == 0)
-        {
+
+        if(recup == 0) {
             fgets(buffer, sizeof(buffer), f);
-            printf("%s", buffer);
+            printf("%s", buffer);   
         }
-        etat++;        
+        if(buffer[0] == '4') {
+            etat = ERROR4;
+        }
 
-
+        if(buffer[0] == '5') {
+            etat = ERROR5;
+        }  
         
-
-        
-
-
-        // fgets(buffer, sizeof(buffer), stdin);
-        // buffer[strlen(buffer) - 1] = '\0'; // écrase le \n en fin de ligne
-        // // voir doc pour comprendre le not.
-        // if(!strcmp("q", buffer)) {
-        //     printf("FIN AUTOMATE\n");
-        //     return 0;
-        // }
-        // else if(!strcmp("n", buffer)) {
-        //     // printf("FIN AUTOMATE\n");
-        //     if (etat == QUIT) {
-        //         printf("ERROR invalid input at this stage");
-        //         exit(1);
-        //     }
-        //     ++etat;            
-        // }
-        // else if(!strcmp("s", buffer)) {
-        //     etat = START;
-        // }
-        // else {
-        //     printf("ERROR invalid input");
-        // }
+        else {
+            etat++;        
+        }
     }
 
     printf("\n\nfin\n\n");
-
     finConnexion(sock);
 
     return 0;    
 }
 
-int erreurs(FILE *f, char code) {
-    char buffer[1024];
-    fgets(buffer, sizeof(buffer), f);
-    if(buffer[0]==code) {
-	    return 0;
-    }
-    else {
-	    switch (buffer[0]) {
-	        case '2':
-                printf("\n %d, recu : 2\n",code);
-                return -1;
-	        case '3':
-                printf("\n %d, recu : 3\n",code);
-                return -1;
-	        case '4':
-                printf("\n %d, recu : 3\n",code);
-                return 1;
-	        case '5':
-               	perror("\npas traite, recu : 5 \n");
-		        return -1;
-	        default:
-               	perror("\nERR: pas entre 2 et 5 \n");
-		        return -1;
-    	}
-    }
-}
+
+
+
