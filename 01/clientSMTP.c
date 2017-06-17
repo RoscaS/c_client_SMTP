@@ -5,7 +5,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#define PORT_SMTP 587 // SMTP: port 25, (587: auth, 465: ssl)
+#define PORT_SMTP 25 // SMTP: port 25, (587: auth, 465: ssl)
 #define BUFFER_SIZE 1024
 
 struct MailData {
@@ -23,14 +23,15 @@ struct MailData {
         // domainDns   = arg[4];
         // destination = arg[5];
         source      = "sol.rosca@he-arc.ch";
-        subject     = "viande";
-        filePath    = "data.txt";
-        domainDns   = "smtp.alphanet.ch";
-        destination = "info@alphanet.ch";
+        subject     = "test";
+        filePath    = "mail.txt";
+        domainDns   = "localhost";
+        destination = "sol.rosca@gmail.com";
         portno      = PORT_SMTP;
-
     }
 };
+
+
 
 void finConnexion(int sock);
 int connexion(const MailData *data);
@@ -46,17 +47,18 @@ int main(int argc, char **argv) {
     //     fprintf(stderr, "\nusage %s hostname port\n\n", argv[0]);
     //     exit(0);
     // }
+    
 
     MailData m1;
     m1.init(argv);
 
     // si la valeur de retour = 1, cela veut dire que le message 
-    // s'est fait grey liste. On re-test apres 10 minutes
+    // s'est fait grey liste (err 4xx). On re-test apres 10 minutes
     if (echange(&m1)) {
-        sleep(600);
+        sleep(600);     // implementer version avec fork
         echange(&m1);
     }
-    return EXIT_SUCCESS;    
+    return 0;    
 }
 
 
@@ -68,43 +70,42 @@ void finConnexion(int sock) {
 
 
 int echange(const MailData *data) {
-    int  sock, sts, grayFlag;
+    int  sock, code, grayFlag;
     char buffer[BUFFER_SIZE];
     const char *dom = NULL;
     FILE *f;
-    
     sock = connexion(data);
-    sts  = reponse(sock);
+    code = reponse(sock);
     dom  = strchr(data->source, '@');
     bzero(buffer,BUFFER_SIZE);
 
     // optionnel mais fonctionnel !
     if (dom == NULL) {
-        perror("ERROR domain parsing");
+        perror("ERROR domain parsing"); // checker les messages d'err (ERRORxxxxx:succes en cas d'err)
         exit(1);
     }
 
     ++ dom; // pointe sur le premier char du nom de dom
 
     // initialisation 
-    sprintf(buffer, "HELO %s", dom);
-    // sprintf(buffer, "HELO host");
+    // sprintf(buffer, "HELO %s", dom);
+    sprintf(buffer, "HELO host");
     envoie(sock, buffer);
-    sts = reponse(sock);
+    code = reponse(sock);
     bzero(buffer,BUFFER_SIZE);
 
     // envoie SOURCE
     sprintf(buffer, "MAIL FROM: <%s>", data->source);
     envoie(sock, buffer);
-    sts = reponse(sock);
+    code = reponse(sock);
     bzero(buffer,BUFFER_SIZE);
 
     // envoie DESTINATION
     sprintf(buffer, "RCPT TO: <%s>", data->destination);
     envoie(sock, buffer);
-    sts = reponse(sock);
+    code = reponse(sock);
     // 4xx => msg grey listed
-    if (sts >= 400 && sts < 500) {
+    if (code >= 400 && code < 500) {
         grayFlag = 1;
     }
     grayFlag = 0;
@@ -113,7 +114,7 @@ int echange(const MailData *data) {
     // envoie DATA
     sprintf(buffer, "DATA");
     envoie(sock, buffer);
-    sts = reponse(sock);
+    code = reponse(sock);
     bzero(buffer,BUFFER_SIZE);
 
     // envoi SUJET
@@ -140,7 +141,7 @@ int echange(const MailData *data) {
     // envoi POINT
     sprintf(buffer, ".");
     envoie(sock, buffer);
-    sts = reponse(sock);
+    code = reponse(sock);
     bzero(buffer,BUFFER_SIZE);
 
 
@@ -148,7 +149,7 @@ int echange(const MailData *data) {
     // envoi QUIT
     sprintf(buffer, "QUIT");
     envoie(sock, buffer);
-    sts = reponse(sock);
+    code = reponse(sock);
     bzero(buffer,BUFFER_SIZE);
 
     // fin de l'echange
