@@ -37,26 +37,26 @@ struct MailData {
 
 // initialisation des parametres
 void initMD(MailData *md, char **arg) {
-     md->source      = arg[1];
-     md->sujet       = arg[2];
-     md->filePath    = arg[3];
-     md->domainDns   = arg[4];
-     md->destination = arg[5];
-     if(arg[6]!=NULL)
-     {
-        //atoi convertis un string en int
-        md->portno  = atoi(arg[6]);
-     }
-     else  
-     {
-        md->portno  = PORT_SMTP;
-     }
-    //md->source      = "sol.rosca@he-arc.ch";
-    //md->sujet       = "test";
-    //md->filePath    = "mail.txt";
-    //md->domainDns   = "localhost";
-    //md->destination = "sol.rosca@gmail.com";
-    //md->portno      = PORT_SMTP;
+    //  md->source      = arg[1];
+    //  md->sujet       = arg[2];
+    //  md->filePath    = arg[3];
+    //  md->domainDns   = arg[4];
+    //  md->destination = arg[5];
+    //  if(arg[6]!=NULL)
+    //  {
+    //     //atoi convertis un string en int
+    //     md->portno  = atoi(arg[6]);
+    //  }
+    //  else  
+    //  {
+    //     md->portno  = PORT_SMTP;
+    //  }
+    md->source      = "sol.rosca@he-arc.ch";
+    md->sujet       = "test";
+    md->filePath    = "mail.txt";
+    md->domainDns   = "smtp.alphanet.ch";
+    md->destination = "schaefer@alphanet.ch";
+    md->portno      = PORT_SMTP;
 }
 
 // prototypes
@@ -70,12 +70,12 @@ int erreurs(FILE *f, char code);
 
 int main(int argc, char **argv) {
      // check args
-     if (argc < 6) {
-         //fprintf(stderr, "\nusage %s \n\n", argv[0]);
-        printf("Paramètres manquants !\n");
-        printf("Source sujet file domain DNS destination [port] \n");
-         exit(1); // todo: fonction help
-     }
+    //  if (argc < 6) {
+    //      //fprintf(stderr, "\nusage %s \n\n", argv[0]);
+    //     printf("Paramètres manquants !\n");
+    //     printf("Source sujet file domain DNS destination [port] \n");
+    //      exit(1); // todo: fonction help
+    //  }
 
     MailData md1;
 
@@ -254,7 +254,7 @@ int machineEtat(const MailData *args) {
             default:
                 exit(1);        
         }
-        if(recup==0)
+        if(recup == 0)
         {
             fgets(buffer, sizeof(buffer), f);
             printf("%s", buffer);
