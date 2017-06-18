@@ -1,9 +1,8 @@
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <sys/socket.h>
+#include<string.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<netdb.h>
 
 #define PORT_SMTP 25 // SMTP: port 25, (587: auth, 465: ssl)
 #define BUFFER_SIZE 1024
@@ -54,46 +53,51 @@ void initMD(MailData *md, char **arg) {
 }
 
 // prototypes
-int  machineEtat(const MailData *args, int sleepTime);
+int  machineEtat(const MailData *args, const int sleepTime);
 int  connexion(const MailData *md);
 void finConnexion(const int sock);
-int  erreurs(FILE *f, char code);
-void childProcess(int sock);
+void errExit(char *err, const int sock);
+
+
+// =================================================
+// ==========           Main              ========== 
+// =================================================
 
 int main(int argc, char **argv) {
     //check args
-     if (argc < 6) {
-        printf("Paramètres manquants !\n");
-        printf("Source sujet file domain DNS destination [port] \n");
+    if (argc < 6) {
+        printf("ERROR bad-args\nusage:\t%s from subject filePath domainDNS to [port]\n", argv[0]);
         exit(1);
-     }
-
+    }
+    // declaration & initialisation objet MailData
     MailData md1;
     initMD(&md1, argv);
+    // lancement machine d'etat
     machineEtat(&md1,0);
     return EXIT_SUCCESS;
 }
+// ========= End of Main ==========
+
+
+
+// =================================================
+// ==========           Connexion         ========== 
+// =================================================
 
 int connexion(const MailData *md) {
     // declaration des variables utiles
-    printf("Trying %s\n", md->domainDns);
-
-    int                socket_desc;
+    int                sock;
     struct sockaddr_in servAddr;    
     struct hostent    *serv;        
 
     // creation socket
-    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_desc < 0) {
-        perror("ERROR opening socket");
-        exit(1);
+    if (!(sock = socket(AF_INET, SOCK_STREAM, 0))) {
+        errExit("ERROR: error opening socket", sock);
     }
 
-    // initialisation des attributs des structures socket
-    serv = gethostbyname(md->domainDns);
-    if (serv == NULL) {
-        perror("ERROR, no such host\n");
-        exit(1);
+    // initialisation des attributs descripteurs socket
+    if (!(serv = gethostbyname(md->domainDns))) {
+        errExit("ERROR: no such host", sock);
     }
 
     bzero( ( char *) &servAddr, sizeof(servAddr));    
@@ -106,23 +110,37 @@ int connexion(const MailData *md) {
     servAddr.sin_port = htons(md->portno);
 
     // connexion au serveur
-    if (connect(socket_desc, 
+    if (connect(sock, 
                (struct sockaddr*) &servAddr, 
                sizeof(servAddr)) < 0) {
-        perror("ERROR connecting");
-        exit(1);
+        errExit("ERROR: error connecting", sock);
     }
-    printf("Connected to %s\n", md->domainDns);
-    printf("Escape character is '^]'\n");
-    return socket_desc;
+
+    printf("\nConnected to %s\n", md->domainDns);
+    return sock;
 }
 
+// ========= End of connexion ==========
+
+
+// =================================================
+// ========== connexionFin ==========         
+// =================================================
 
 void finConnexion(const int sock) {
-    // shutdown(sock, 2);
+    if (sock < 0) {
+        return;
+    }
+    printf("Closing connexion...\n");
     close(sock);
 }
 
+// ========= End of connexionFin ==========
+
+
+// =================================================
+// ========== machineEtat ==========         
+// =================================================
 
 int machineEtat(const MailData *args, int sleepTime) {
 
@@ -130,15 +148,20 @@ int machineEtat(const MailData *args, int sleepTime) {
 
     int  etat, sock, onOff, recup, pid;
     char buffer[BUFFER_SIZE];
-    FILE *f, *txt;
+    FILE *f   = NULL;
+    FILE *txt = NULL;
 
     onOff = ON; 
     etat  = START;
     sock  = connexion(args);
-    f     = fdopen(sock, "r+");
+
+    if (!(f = fdopen(sock, "r+"))) {
+        errExit("ERROR: can't open socket", sock);
+    }
 
     while(onOff) {
         recup = 0;
+
         switch(etat) {
 
             case START:
@@ -177,11 +200,8 @@ int machineEtat(const MailData *args, int sleepTime) {
             case BODY:
                 printf("\nEtat: BODY\n");
 
-                txt = fopen(args->filePath, "r");
-
-                if (txt < 0) {
-                    perror("ERROR can't open file");
-                    exit(1);
+                if (!(txt = fopen(args->filePath, "r"))) {           // DRY
+                    errExit("ERROR: can't open mail file", sock);
                 }
                 while (fgets(buffer, sizeof(buffer), txt)) {
                     fputs(buffer,f);
@@ -204,46 +224,43 @@ int machineEtat(const MailData *args, int sleepTime) {
 
             case ERROR4:
                 printf("\nEtat: ERROR4\n");
-                printf("ERROR %c%c%c: grey-listed\n", buffer[0], buffer[1], buffer[2]);
-                printf("forking process & retry in 10'...");
+                fprintf(stderr, "ERROR %c%c%c: grey-listed\n", buffer[0], buffer[1], buffer[2]);
+                fprintf(stderr, "forking process & retry in 10'...");
                 onOff = OFF;
 
-                // forking
                 pid = fork();
 
+                // process enfant
                 if (pid == 0) {
-                    // process enfant
                     printf("Child process: retrying to send in 10'...\n");
-                    machineEtat(args, 30);
+                    machineEtat(args, 30); // changer a 600 apres tests !
                 }
 
+                // process parent
                 if (pid > 0) {
-                    // process parent
                     printf("Exit parent process..\n");
+                    fclose(f);
                     finConnexion(sock);
                     exit(0);
                 }
 
+	            // echec forking
 	            else {
-	            	// echec forking
-                    perror("ERROR fork() failed!\n");
-	            	exit(1);
+                    errExit("ERROR: fork failed", sock);   
 	            }
 
                 break;     
 
             case ERROR5:
                 printf("\nEtat: ERROR5\n");
-                printf("ERROR %c%c%c: final error\n", buffer[0], buffer[1], buffer[2]);
-                printf("exit...\n");
+                fprintf(stderr, "ERROR %c%c%c: final-error\n", buffer[0], buffer[1], buffer[2]);
                 finConnexion(sock);
+                fprintf(stderr, "exit...\n");
                 exit(1);
                 break;
             
             default:
-                perror("ERROR illegal state")
-                finConnexion(sock);
-                exit(1);        
+                errExit("ERROR: illegal state", sock);       
         }
 
         if(recup == 0) {
@@ -260,10 +277,25 @@ int machineEtat(const MailData *args, int sleepTime) {
             etat++;        
         }
     }
+    fclose(f);
     finConnexion(sock);
-    return 0;    
+    return 0;
 }
 
+// ========= End of machineEtat ==========
 
+
+// =================================================
+// ========== errExit ==========         
+// =================================================
+
+void errExit(char *err, const int sock) {
+    fprintf(stderr, "%s\n", err);
+    finConnexion(sock);
+    fprintf(stderr, "exit...\n");
+    exit(-1);
+}
+
+// ========= End of errExit ==========
 
 
