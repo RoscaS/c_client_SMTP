@@ -23,7 +23,7 @@ int main(int arc, char **argv) {
 			sleep(3);
 			// printf("parent process: counter = %d\n", ++counter);
 
-			if (j == 3) {
+			if (j == 5) {
 				printf("Exit parent process... child alone.\n");
 				printf("Child will display a message when he is done (21sec).\n");
 				printf("user prompt should be available:\n");
