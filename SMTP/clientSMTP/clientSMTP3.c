@@ -258,32 +258,34 @@ int machineEtat(const MailData *args, int sleepTime) {
                 fprintf(stderr, "exit...\n");
                 exit(1);
                 break;
-
-            case ERRORX:
-                printf("\nEtat: ERRORX\n");
-                fprintf(stderr, "ERROR %c%c%c: final-error\n", buffer[0], buffer[1], buffer[2]);
             
             default:
-                errExit("ERROR: illegal state", sock);       
+                errExit("ERROR: unknown error", sock);       
         }
-
         if(recup == 0) {
             fgets(buffer, sizeof(buffer), f);
-            printf("%s", buffer);   
-        }
-        else if(buffer[0] == "2" || buffer[0] == "3") {
-            etat++;
-        }
-        else if(buffer[0] == '4') {
-            etat = ERROR4;
-        }
-        else if(buffer[0] == '5') {
-            etat = ERROR5;
-        }  
-        else {
+            printf("%s", buffer);
+
             
+            if((buffer[0] == '2') || (buffer[0] == '3')) {
+                ++etat; 
+            }
+            else if(buffer[0] == '4') {
+                etat = ERROR4;
+            }
+            else if(buffer[0] == '5') {
+                etat = ERROR5;
+            }  
+            else {
+                etat = -1;
+            }
+        }
+
+        else {
+            ++etat;
         }
     }
+    
     fclose(f);
     finConnexion(sock);
     return 0;
