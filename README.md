@@ -13,7 +13,6 @@ https://ssl.horus.ch/~schaefer/bin/view/HEArc/DirectivesClientSMTP
 sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ./clientSMTP3 nathan.latino@he-arc.ch test mail.txt smtp.alphanet.ch schaefer@alphanet.ch
 Trying smtp.alphanet.ch
 Connected to smtp.alphanet.ch
-Escape character is '^]'
 
 Etat: START
 220 shakotay.alphanet.ch ESMTP Postfix (Debian/GNU)
@@ -31,8 +30,9 @@ RCPT TO: <schaefer@alphanet.ch>
 
 Etat: ERROR4
 ERROR 450: grey-listed
-forking process & retry in 10'...Exit parent process..
-forking process & retry in 10'...Child process: retrying to send in 10'...
+Forking process...
+Exit parent process..
+Child process: retrying to send in 20'...
 sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ls
 total 28
 -rwxr-xr-x 1 sol sol 12008 Jun 18 10:15 clientSMTP3
@@ -41,7 +41,6 @@ total 28
 -rwxr-xr-x 1 sol sol    84 Jun 18 09:23 makefile
 sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ Trying smtp.alphanet.ch
 Connected to smtp.alphanet.ch
-Escape character is '^]'
 
 Etat: START
 220 shakotay.alphanet.ch ESMTP Postfix (Debian/GNU)
@@ -59,8 +58,9 @@ RCPT TO: <schaefer@alphanet.ch>
 
 Etat: ERROR4
 ERROR 450: grey-listed
-forking process & retry in 10'...Exit parent process..
-forking process & retry in 10'...Child process: retrying to send in 10'...
+Forking process...
+Exit parent process..
+Child process: retrying to send in 20'...
 ```
 
 
@@ -152,7 +152,6 @@ sol@debian:~/code/clientSMTP/SMTP/clientSMTP$
 sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ./clientSMTP3 sol.rosca@gmail test mail.txt aspmx.l.google.com test@testt.ch
 Trying aspmx.l.google.com
 Connected to aspmx.l.google.com
-Escape character is '^]'
 
 Etat: START
 220 mx.google.com ESMTP h32si6380560edc.376 - gsmtp
