@@ -52,7 +52,7 @@ void initMD(MailData *md, char **arg) {
     //  {
     //     md->portno  = PORT_SMTP;
     //  }
-    md->source      = "lucas.verardo@he-arc.ch";
+    md->source      = "quentin.michel@he-arc.ch";
     md->sujet       = "test";
     md->filePath    = "mail.txt";
     md->domainDns   = "smtp.alphanet.ch";
@@ -228,6 +228,8 @@ int machineEtat(const MailData *args, int sleepTime) {
 
                 if (pid == 0) {
                     finConnexion(sock);
+                    printf("Mail will be send in 10 minutes !\n");
+                    printf("Exit...\n");
                     machineEtat(args, 600);
                     exit(0);
                 }
