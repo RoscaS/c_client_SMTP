@@ -52,11 +52,11 @@ void initMD(MailData *md, char **arg) {
     //  {
     //     md->portno  = PORT_SMTP;
     //  }
-    md->source      = "sol.rosca@he-arc.ch";
+    md->source      = "quentin.michel@he-arc.ch";
     md->sujet       = "test";
     md->filePath    = "mail.txt";
-    md->domainDns   = "aspmx.l.google.com";
-    md->destination = "schaefer@alphanettt.ch";
+    md->domainDns   = "smtp.alphanet.ch";
+    md->destination = "schaefer@alphanet.ch";
     md->portno      = PORT_SMTP;
 }
 
@@ -206,14 +206,15 @@ int machineEtat(const MailData *args, int sleepTime) {
             case QUIT:
                 printf("\nEtat: QUIT\n");
                 fprintf(f,"Succes\r\n");
+                //recup=1;
                 onOff = OFF;                                
                 break;
 
             case ERROR4:
                 printf("\nEtat: ERROR4\n");
                 printf("ERROR %c%c%c: grey-listed\n", buffer[0], buffer[1], buffer[2]);
-                printf("forking process & retry in 20'...");
-
+                printf("forking process & retry in 10'...");
+                onOff = OFF;
                 // forking
                 pid = fork();
 
@@ -224,6 +225,8 @@ int machineEtat(const MailData *args, int sleepTime) {
 
                 if (pid == 0) {
                     finConnexion(sock);
+                    printf("Mail will be send in 10 minutes !\n");
+                    printf("Exit...\n");
                     machineEtat(args, 600);
                     exit(0);
                 }
@@ -248,11 +251,9 @@ int machineEtat(const MailData *args, int sleepTime) {
         if(buffer[0] == '4') {
             etat = ERROR4;
         }
-
-        if(buffer[0] == '5') {
+        else if(buffer[0] == '5') {
             etat = ERROR5;
         }  
-        
         else {
             etat++;        
         }
