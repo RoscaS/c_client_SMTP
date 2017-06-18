@@ -225,7 +225,7 @@ int machineEtat(const MailData *args, int sleepTime) {
             case ERROR4:
                 printf("\nEtat: ERROR4\n");
                 fprintf(stderr, "ERROR %c%c%c: grey-listed\n", buffer[0], buffer[1], buffer[2]);
-                fprintf(stderr, "forking process & retry in 10'...");
+                fprintf(stderr, "forking process & retry in 10'...\n");
                 onOff = OFF;
 
                 pid = fork();
