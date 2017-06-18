@@ -66,7 +66,7 @@ void errExit(char *err, const int sock);
 int main(int argc, char **argv) {
     //check args
     if (argc < 6) {
-        printf("ERROR bad-args\nusage:\t%s from subject filePath domainDNS to [port]\n", argv[0]);
+        printf("ERROR bad-args\nusage:\t%s source subject filePath domainDNS destination [port]\n", argv[0]);
         exit(1);
     }
     // declaration & initialisation objet MailData
@@ -165,7 +165,7 @@ int machineEtat(const MailData *args, int sleepTime) {
         switch(etat) {
 
             case START:
-                printf("\nEtat: START\n");
+                printf("\nEtat: START: Initialisation de la communication\n");
                 break;
 
             case HELO:
@@ -225,7 +225,7 @@ int machineEtat(const MailData *args, int sleepTime) {
             case ERROR4:
                 printf("\nEtat: ERROR4\n");
                 fprintf(stderr, "ERROR %c%c%c: grey-listed\n", buffer[0], buffer[1], buffer[2]);
-                fprintf(stderr, "forking process & retry in 10'...\n");
+                fprintf(stderr, "forking process...\n");
                 onOff = OFF;
 
                 pid = fork();
@@ -233,7 +233,7 @@ int machineEtat(const MailData *args, int sleepTime) {
                 // process enfant
                 if (pid == 0) {
                     printf("Child process: retrying to send in 10'...\n");
-                    machineEtat(args, 30); // changer a 600 apres tests !
+                    machineEtat(args, 1200);
                 }
 
                 // process parent
@@ -258,6 +258,10 @@ int machineEtat(const MailData *args, int sleepTime) {
                 fprintf(stderr, "exit...\n");
                 exit(1);
                 break;
+
+            case ERRORX:
+                printf("\nEtat: ERRORX\n");
+                fprintf(stderr, "ERROR %c%c%c: final-error\n", buffer[0], buffer[1], buffer[2]);
             
             default:
                 errExit("ERROR: illegal state", sock);       
@@ -267,14 +271,17 @@ int machineEtat(const MailData *args, int sleepTime) {
             fgets(buffer, sizeof(buffer), f);
             printf("%s", buffer);   
         }
-        if(buffer[0] == '4') {
+        else if(buffer[0] == "2" || buffer[0] == "3") {
+            etat++;
+        }
+        else if(buffer[0] == '4') {
             etat = ERROR4;
         }
         else if(buffer[0] == '5') {
             etat = ERROR5;
         }  
         else {
-            etat++;        
+            
         }
     }
     fclose(f);
