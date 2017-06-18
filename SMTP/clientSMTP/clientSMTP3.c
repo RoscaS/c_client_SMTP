@@ -262,12 +262,13 @@ int machineEtat(const MailData *args, int sleepTime) {
             default:
                 errExit("ERROR: unknown error", sock);       
         }
+
         if(recup == 0) {
             fgets(buffer, sizeof(buffer), f);
             printf("%s", buffer);
 
             
-            if((buffer[0] == '2') || (buffer[0] == '3')) {
+            if(buffer[0] == '2' || buffer[0] == '3') {
                 ++etat; 
             }
             else if(buffer[0] == '4') {
