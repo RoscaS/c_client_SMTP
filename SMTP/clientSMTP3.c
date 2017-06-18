@@ -25,6 +25,7 @@
 #define OFF 0
 #define ON  1
 
+
 // struct parametres
 typedef struct MailData MailData;
 struct MailData {
@@ -52,7 +53,7 @@ void initMD(MailData *md, char **arg) {
     //  {
     //     md->portno  = PORT_SMTP;
     //  }
-    md->source      = "quentin.michel@he-arc.ch";
+    md->source      = "loic.schwab@he-arc.ch";
     md->sujet       = "test";
     md->filePath    = "mail.txt";
     md->domainDns   = "smtp.alphanet.ch";
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
     initMD(&md1, argv);
 
 
-    machineEtat(&md1, 0);
+    machineEtat(&md1,0);
     
     return 0;
 }
@@ -137,8 +138,13 @@ void finConnexion(const int sock) {
 
 
 int machineEtat(const MailData *args, int sleepTime) {
-    sleep(sleepTime);
-    int etat, sock, onOff, recup, pid;
+
+	/*if(filsFlag == 1)
+	{
+    	sleep(60);
+	}*/
+	sleep(sleepTime);
+    int etat, sock, onOff, recup;
     char buffer[BUFFER_SIZE];
     FILE *f, *txt;
 
@@ -219,9 +225,9 @@ int machineEtat(const MailData *args, int sleepTime) {
                 printf("forking process & retry in 10'...");
                 onOff = OFF;
                 // forking
-                pid = fork();
+                //pid = fork();
 
-                if (pid < 0) {
+                /*if (pid < 0) {
                     perror("ERROR on fork");
                     exit(1);
                 }
@@ -230,9 +236,10 @@ int machineEtat(const MailData *args, int sleepTime) {
                     finConnexion(sock);
                     printf("Mail will be send in 10 minutes !\n");
                     printf("Exit...\n");
-                    machineEtat(args, 600);
+                    //machineEtat(args, 600, pid);
                     exit(0);
-                }
+                }*/
+                machineEtat(args, 60);
                 break;     
 
             case ERROR5:
