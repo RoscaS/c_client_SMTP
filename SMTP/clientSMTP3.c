@@ -68,7 +68,7 @@ int erreurs(FILE *f, char code);
 void childProcess(int sock);
 
 int main(int argc, char **argv) {
-     // check args
+    ////check args
     //  if (argc < 6) {
     //      //fprintf(stderr, "\nusage %s \n\n", argv[0]);
     //     printf("Paramètres manquants !\n");
@@ -77,13 +77,10 @@ int main(int argc, char **argv) {
     //  }
 
     MailData md1;
-
     initMD(&md1, argv);
-
-
     machineEtat(&md1, 0);
     
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 int connexion(const MailData *md) {
@@ -260,10 +257,7 @@ int machineEtat(const MailData *args, int sleepTime) {
             etat++;        
         }
     }
-
-    printf("\n\nfin\n\n");
     finConnexion(sock);
-
     return 0;    
 }
 
