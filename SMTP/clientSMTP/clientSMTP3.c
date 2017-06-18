@@ -5,8 +5,8 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#define BUFFER_SIZE 1024
 #define PORT_SMTP 25 // SMTP: port 25, (587: auth, 465: ssl)
+#define BUFFER_SIZE 1024
 
 // etats
 #define START 0
@@ -21,9 +21,10 @@
 #define ERROR4 9
 #define ERROR5 10
 
-// on/off
+// machineEtat: on/off
 #define OFF 0
 #define ON  1
+
 
 // struct parametres
 typedef struct MailData MailData;
@@ -38,48 +39,38 @@ struct MailData {
 
 // initialisation des parametres
 void initMD(MailData *md, char **arg) {
-    //  md->source      = arg[1];
-    //  md->sujet       = arg[2];
-    //  md->filePath    = arg[3];
-    //  md->domainDns   = arg[4];
-    //  md->destination = arg[5];
-    //  if(arg[6]!=NULL)
-    //  {
-    //     //atoi convertis un string en int
-    //     md->portno  = atoi(arg[6]);
-    //  }
-    //  else  
-    //  {
-    //     md->portno  = PORT_SMTP;
-    //  }
-    md->source      = "quentin.michel@he-arc.ch";
-    md->sujet       = "test";
-    md->filePath    = "mail.txt";
-    md->domainDns   = "smtp.alphanet.ch";
-    md->destination = "schaefer@alphanet.ch";
-    md->portno      = PORT_SMTP;
+     md->source      = arg[1];
+     md->sujet       = arg[2];
+     md->filePath    = arg[3];
+     md->domainDns   = arg[4];
+     md->destination = arg[5];
+
+     if(arg[6]!=NULL) {
+        md->portno  = atoi(arg[6]);
+     }
+     else {
+        md->portno  = PORT_SMTP;
+     }
 }
 
 // prototypes
-int machineEtat(const MailData *args, int sleepTime);
+int  machineEtat(const MailData *args, int sleepTime);
 int  connexion(const MailData *md);
 void finConnexion(const int sock);
-int erreurs(FILE *f, char code);
+int  erreurs(FILE *f, char code);
 void childProcess(int sock);
 
 int main(int argc, char **argv) {
-    ////check args
-    //  if (argc < 6) {
-    //      //fprintf(stderr, "\nusage %s \n\n", argv[0]);
-    //     printf("Paramètres manquants !\n");
-    //     printf("Source sujet file domain DNS destination [port] \n");
-    //      exit(1); // todo: fonction help
-    //  }
+    //check args
+     if (argc < 6) {
+        printf("Paramètres manquants !\n");
+        printf("Source sujet file domain DNS destination [port] \n");
+        exit(1);
+     }
 
     MailData md1;
     initMD(&md1, argv);
-    machineEtat(&md1, 0);
-    
+    machineEtat(&md1,0);
     return EXIT_SUCCESS;
 }
 
@@ -134,8 +125,10 @@ void finConnexion(const int sock) {
 
 
 int machineEtat(const MailData *args, int sleepTime) {
-    sleep(sleepTime);
-    int etat, sock, onOff, recup, pid;
+
+	sleep(sleepTime);
+
+    int  etat, sock, onOff, recup, pid;
     char buffer[BUFFER_SIZE];
     FILE *f, *txt;
 
@@ -205,8 +198,7 @@ int machineEtat(const MailData *args, int sleepTime) {
 
             case QUIT:
                 printf("\nEtat: QUIT\n");
-                fprintf(f,"Succes\r\n");
-                //recup=1;
+                fprintf(f,"QUIT\r\n");
                 onOff = OFF;                                
                 break;
 
@@ -215,21 +207,29 @@ int machineEtat(const MailData *args, int sleepTime) {
                 printf("ERROR %c%c%c: grey-listed\n", buffer[0], buffer[1], buffer[2]);
                 printf("forking process & retry in 10'...");
                 onOff = OFF;
+
                 // forking
                 pid = fork();
 
-                if (pid < 0) {
-                    perror("ERROR on fork");
-                    exit(1);
+                if (pid == 0) {
+                    // process enfant
+                    printf("Child process: retrying to send in 10'...\n");
+                    machineEtat(args, 30);
                 }
 
-                if (pid == 0) {
+                if (pid > 0) {
+                    // process parent
+                    printf("Exit parent process..\n");
                     finConnexion(sock);
-                    printf("Mail will be send in 10 minutes !\n");
-                    printf("Exit...\n");
-                    machineEtat(args, 600);
                     exit(0);
                 }
+
+	            else {
+	            	// echec forking
+                    perror("ERROR fork() failed!\n");
+	            	exit(1);
+	            }
+
                 break;     
 
             case ERROR5:
@@ -241,6 +241,8 @@ int machineEtat(const MailData *args, int sleepTime) {
                 break;
             
             default:
+                perror("ERROR illegal state")
+                finConnexion(sock);
                 exit(1);        
         }
 

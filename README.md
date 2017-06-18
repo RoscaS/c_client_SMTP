@@ -2,34 +2,90 @@
 
 * tests codes err + wireshark
 
+https://ssl.horus.ch/~schaefer/bin/view/HEArc/DirectivesClientSMTP
 
 ## greyListing
 
 [wikipedia](https://fr.wikipedia.org/wiki/Greylisting)  
 
 
-
-
-## localhost (sol)
+## smtp.alphanet.ch (fork test) (wiresharkForkGreylist.png)
 
 ```sh
-sol@debian:~/code/clientSMTP/SMTP$ ./clientSMTP3 bidon@homtila.com test mail.txt localhost sol.rosca@gmail.com 25
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ./clientSMTP3 nathan.latino@he-arc.ch test mail.txt smtp.alphanet.ch schaefer@alphanet.ch
+Trying smtp.alphanet.ch
+Connected to smtp.alphanet.ch
+Escape character is '^]'
+
+Etat: START
+220 shakotay.alphanet.ch ESMTP Postfix (Debian/GNU)
+
+Etat: HELO
+250 shakotay.alphanet.ch
+
+Etat: FROM
+MAIL FROM: <nathan.latino@he-arc.ch>
+250 2.1.0 Ok
+
+Etat: TO
+RCPT TO: <schaefer@alphanet.ch>
+450 4.2.0 <schaefer@alphanet.ch>: Recipient address rejected: Greylisted, see http://postgrey.schweikert.ch/help/alphanet.ch.html
+
+Etat: ERROR4
+ERROR 450: grey-listed
+forking process & retry in 10'...Exit parent process..
+forking process & retry in 10'...Child process: retrying to send in 10'...
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ls
+total 28
+-rwxr-xr-x 1 sol sol 12008 Jun 18 10:15 clientSMTP3
+-rwxr-xr-x 1 sol sol  6886 Jun 18 10:15 clientSMTP3.c
+-rwxr-xr-x 1 sol sol    20 Jun 18 09:23 mail.txt
+-rwxr-xr-x 1 sol sol    84 Jun 18 09:23 makefile
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ Trying smtp.alphanet.ch
+Connected to smtp.alphanet.ch
+Escape character is '^]'
+
+Etat: START
+220 shakotay.alphanet.ch ESMTP Postfix (Debian/GNU)
+
+Etat: HELO
+250 shakotay.alphanet.ch
+
+Etat: FROM
+MAIL FROM: <nathan.latino@he-arc.ch>
+250 2.1.0 Ok
+
+Etat: TO
+RCPT TO: <schaefer@alphanet.ch>
+450 4.2.0 <schaefer@alphanet.ch>: Recipient address rejected: Greylisted, see http://postgrey.schweikert.ch/help/alphanet.ch.html
+
+Etat: ERROR4
+ERROR 450: grey-listed
+forking process & retry in 10'...Exit parent process..
+forking process & retry in 10'...Child process: retrying to send in 10'...
+```
+
+
+## localhost
+
+```sh
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ./clientSMTP3 un@deux.com test mail.txt localhost un@trois.com
 Trying localhost
 Connected to localhost
 Escape character is '^]'
 
 Etat: START
-220 debian.home ESMTP Exim 4.84_2 Sat, 17 Jun 2017 09:18:36 -0500
+220 debian.home ESMTP Exim 4.84_2 Sun, 18 Jun 2017 10:32:02 -0500
 
 Etat: HELO
 250 debian.home Hello localhost [127.0.0.1]
 
 Etat: FROM
-MAIL FROM: <bidon@homtila.com>
+MAIL FROM: <un@deux.com>
 250 OK
 
 Etat: TO
-RCPT TO: <sol.rosca@gmail.com>
+RCPT TO: <un@trois.com>
 250 Accepted
 
 Etat: DATA
@@ -43,39 +99,37 @@ C'est pour ce soir!
 
 
 Etat: DOT
-250 OK id=1dMEYe-0000ZL-A1
+250 OK id=1dMcBG-000179-FR
 
 Etat: QUIT
 221 debian.home closing connection
-
-
-fin
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ 
 ```
 
-
-## smtp.alphanet.ch (sol)
+## smtprel.he-arc.ch (test reel)
 
 ```sh
-Trying smtp.alphanet.ch
-Connected to smtp.alphanet.ch
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ./clientSMTP3 sol.rosca@he-arc.ch test mail.txt smtprel.he-arc.ch steven.jeanneret@outlook.com 
+Trying smtprel.he-arc.ch
+Connected to smtprel.he-arc.ch
 Escape character is '^]'
 
 Etat: START
-220 shakotay.alphanet.ch ESMTP Postfix (Debian/GNU)
+220 ***************************************************
 
 Etat: HELO
-250 shakotay.alphanet.ch
+250 srv-smtpapp1.he-arc.ch
 
 Etat: FROM
 MAIL FROM: <sol.rosca@he-arc.ch>
 250 2.1.0 Ok
 
 Etat: TO
-RCPT TO: <schaefer@alphanet.ch>
-554 5.7.1 Service unavailable; Client host [213.55.176.143] blocked using cbl.abuseat.org; Blocked - see http://www.abuseat.org/lookup.cgi?ip=213.55.176.143
+RCPT TO: <steven.jeanneret@outlook.com>
+250 2.1.5 Ok
 
 Etat: DATA
-554 5.5.1 Error: no valid recipients
+354 End data with <CR><LF>.<CR><LF>
 
 Etat: SUBJ
 Subject: test
@@ -85,40 +139,40 @@ C'est pour ce soir!
 
 
 Etat: DOT
-221 2.7.0 Error: I can break rules, too. Goodbye.
+250 2.0.0 Ok: queued as 1F45B60DC2
 
 Etat: QUIT
-221 2.7.0 Error: I can break rules, too. Goodbye.
-
-
-fin
+221 2.0.0 Bye
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ 
 ```
 
-## ## smtp.alphanet.ch (steven)
+
+
+## Err 500
 
 ```sh
-Trying smtp.alphanet.ch
-Connected to smtp.alphanet.ch
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ ./clientSMTP3 sol.rosca@gmail test mail.txt aspmx.l.google.com test@testt.ch
+Trying aspmx.l.google.com
+Connected to aspmx.l.google.com
 Escape character is '^]'
+
 Etat: START
-220 shakotay.alphanet.ch ESMTP Postfix (Debian/GNU)
+220 mx.google.com ESMTP h32si6380560edc.376 - gsmtp
+
 Etat: HELO
-250 shakotay.alphanet.ch
+250 mx.google.com at your service
+
 Etat: FROM
-MAIL FROM: <steven.jeanneret@he-arc.ch>
-250 2.1.0 Ok
+MAIL FROM: <sol.rosca@gmail>
+250 2.1.0 OK h32si6380560edc.376 - gsmtp
+
 Etat: TO
-RCPT TO: <schaefer@alphanet.ch>
-450 4.2.0 <schaefer@alphanet.ch>: Recipient address rejected: Greylisted, see http://postgrey.schweikert.ch/help/alphanet.ch.html
-Etat: DATA
-554 5.5.1 Error: no valid recipients
-Etat: SUBJ
-Subject: test
-Etat: BODY
-C'est pour ce soir!
-Etat: DOT
-221 2.7.0 Error: I can break rules, too. Goodbye.
-Etat: QUIT
-221 2.7.0 Error: I can break rules, too. Goodbye.
-fin
+RCPT TO: <test@testt.ch>
+550-5.1.1 The email account that you tried to reach does not exist. Please try
+
+Etat: ERROR5
+ERROR 550: final error
+exit...
+sol@debian:~/code/clientSMTP/SMTP/clientSMTP$ 
 ```
+
