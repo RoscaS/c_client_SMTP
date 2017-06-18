@@ -232,7 +232,7 @@ int machineEtat(const MailData *args, int sleepTime) {
 
                 // process enfant
                 if (pid == 0) {
-                    printf("Child process: retrying to send in 10'...\n");
+                    printf("Child process: retrying to send in 20'...\n");
                     machineEtat(args, 1200);
                 }
 
