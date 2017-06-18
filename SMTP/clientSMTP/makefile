@@ -1,4 +1,4 @@
-TARGET=clientSMTP3
+TARGET=clientSMTP
 CFLAGS=-Wall -lpthread
 
 all: $(TARGET)
