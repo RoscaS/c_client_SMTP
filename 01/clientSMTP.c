@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <sys/socket.h>
+
+// ATTENTION ! Gros soucis avec cette version du code.
+// Fonctionnelle mais à compiler en C++ et non pas C.
 
 #define PORT_SMTP 25 // SMTP: port 25, (587: auth, 465: ssl)
 #define BUFFER_SIZE 1024
